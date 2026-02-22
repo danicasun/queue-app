@@ -31,3 +31,15 @@ dist-ssr
 .env.local
 .env.*
 .env
+
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build outputs
+.next/
+dist/
+build/
+
+# misc
+.DS_Store
