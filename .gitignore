@@ -27,11 +27,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment variables
-.env.local
-.env.*
-.env
-
 # dependencies
 node_modules/
 .pnpm-store/
@@ -41,5 +36,17 @@ node_modules/
 dist/
 build/
 
+# next
+.next/
+out/
+dist/
+
+# env
+.env.local
+.env.*
+!.env.example
+!.env.local.example
+
 # misc
 .DS_Store
+tsconfig.tsbuildinfo
