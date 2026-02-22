@@ -1,0 +1,211 @@
+High-Level Summary
+- Next.js App Router with /app as the authenticated area and /login for auth entry; root landing at /.
+- Server Actions handle nearly all data access (lib/actions/*), with client components calling them directly.
+- Supabase client creation is split between lib/supabase/server.ts and direct @supabase/ssr usage in app/auth/callback/route.ts, creating inconsistency.
+- Middleware protects /app routes by user presence; if env vars are missing, protection silently disables.
+- RLS is enabled with policies in supabase/schema.sql, but some tables (e.g., queue_items, folders) appear unused in app code.
+- Several client pages (/app/settings, /app/organize) are fully client-rendered with placeholder state; no server data.
+- Validation is ad hoc and duplicated in lib/validation.ts; no schema library like Zod.
+- Legacy and reference folders (legacy-pages/, ui-reference/, Vite-era helpers) likely add confusion and dead code.
+- Caching is limited to revalidatePath, with no explicit fetch caching or tagging; client state can become stale.
+
+System Mental Model
+
+What the app does
+Queue is a personal learning queue app. Users log in via magic link, maintain a list of topics, attach resources, and optionally share topics to a Discover feed. Basic flows exist for topic CRUD, resource CRUD, and comments on shared topics.
+
+Core user flows
+- Auth: Magic link sign-in (/login -> /auth/callback), then redirect to /app.
+- Queue: View topics, add topic, view detail, update title/note/visibility, add/delete resources.
+- Discover: View shared topics from others, save a shared topic into your own queue, and comment on shared topics.
+- Organize/Settings: Placeholder client UI with local-only state.
+
+Data flow diagram (written)
+- UI (client components) -> Server Actions (lib/actions/*.ts) -> Supabase (PostgREST via @supabase/ssr).
+- For some read flows (e.g., comments), client components invoke server actions from useEffect, which triggers a network call back to the server action -> Supabase -> returns data -> client state update.
+
+Architecture Map
+
+Routes
+- Root: app/page.tsx (landing)
+- Auth: app/login/*, app/auth/callback/route.ts
+- App Shell: app/app/layout.tsx and app/app/* routes
+  - /app -> app/app/page.tsx (Queue)
+  - /app/discover -> app/app/discover/page.tsx
+  - /app/organize -> app/app/organize/page.tsx
+  - /app/settings -> app/app/settings/page.tsx
+  - /app/topic/[id] -> app/app/topic/[id]/page.tsx
+- Loading boundaries: app/app/loading.tsx, app/app/discover/loading.tsx, app/app/organize/loading.tsx, app/app/settings/loading.tsx, app/app/topic/[id]/loading.tsx, app/login/loading.tsx
+- No explicit error boundaries detected.
+
+Services / Utilities
+- lib/actions/queue.ts: server actions for topics/resources (CRUD + tags)
+- lib/actions/discover.ts: server actions for discover feed and comments
+- app/login/actions.ts: server action for magic link
+- lib/supabase/server.ts: server-side Supabase client
+- lib/supabase/client.ts: browser client (unused)
+- lib/validation.ts: validation helpers (duplicated APIs)
+- lib/toast.ts: notification wrapper
+- lib/utils.js: CSS class utilities, iframe check (limited usage)
+- lib/app-params.js and lib/query-client.js: likely legacy (Vite + React Query)
+
+Auth
+- middleware.ts protects /app/* and /login via Supabase auth.getUser()
+- app/auth/callback/route.ts exchanges auth code -> session and sets cookies
+- Auth read in server actions via createServerClient().auth.getUser()
+
+DB / Supabase
+- Schema + RLS policies at supabase/schema.sql
+- Tables: topics, resources, tags, topic_tags, comments, profiles, folders, queue_items
+- App currently uses topics, resources, tags, topic_tags, comments
+- queue_items and folders appear unused in code
+
+UI
+- components/queue/*: UI for queue/discover/topic details (all client)
+- components/ui/Toaster.tsx
+
+Source of truth
+- Data: Supabase tables + RLS policies
+- Access layer: lib/actions/* (server actions)
+
+Structural Issues / Red Flags (with file paths)
+
+Critical
+- Route protection depends on env vars being set. If NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing, middleware.ts becomes a no-op, leaving /app/* unprotected. (middleware.ts)
+- Inconsistent Supabase client creation. Direct @supabase/ssr usage in app/auth/callback/route.ts bypasses lib/supabase/server.ts (different cookie handling assumptions). (app/auth/callback/route.ts, lib/supabase/server.ts)
+
+High
+- Client-triggered server actions for reads. Comment loading happens in a client useEffect, which means data is always fetched client-side instead of server-rendered. This can cause waterfalls and inconsistent caching. (components/queue/CommentSheet.tsx, lib/actions/discover.ts)
+- Potential stale client state after server mutations. UI uses local useState updates with optimistic assumptions; server revalidation does not trigger refetch in the client, so cross-tab or concurrent edits can desync. (app/app/QueueClient.tsx, app/app/topic/[id]/TopicDetailClient.tsx)
+
+Medium
+- Excessive client components. app/app/organize/page.tsx and app/app/settings/page.tsx are client-only despite being mostly static. This increases bundle size and reduces SSR benefits.
+- Validation inconsistency. lib/validation.ts defines two overlapping validation APIs; only a subset is used. This will confuse future refactors.
+- Legacy and reference code in repo. legacy-pages/ and ui-reference/ appear unused; lib/app-params.js references import.meta.env (Vite-era), and lib/query-client.js references React Query without a dependency in package.json.
+
+Low
+- Hard-coded placeholders. Organize and Settings pages show placeholder data (e.g., fake tags and profile), which may mask missing backend wiring.
+- No explicit error boundaries. App Router lacks error.tsx, so runtime failures fall back to global errors without route-level recovery.
+
+Next.js / App Router Details
+- Layout structure
+  - Root: app/layout.tsx (global HTML, AppToaster)
+  - Nested: app/app/layout.tsx (app shell + BottomTabs)
+- Routes use App Router (app/), no route groups found.
+- Server vs Client components
+  - Server (default): app/layout.tsx, app/page.tsx, app/app/layout.tsx, app/app/page.tsx, app/app/discover/page.tsx, app/app/topic/[id]/page.tsx, app/login/page.tsx
+  - Client: QueueClient, DiscoverClient, TopicDetailClient, Organize, Settings, LoginForm, all queue UI components.
+- Data fetching
+  - Server components call server actions for initial data (getTopics, getDiscoverFeed, getTopicWithResources)
+  - Client components call server actions for mutations and some reads (comments)
+- use client boundaries
+  - Some pages are client-only without server needs (Organize/Settings), which is likely unnecessary.
+- Env variables
+  - NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_SITE_URL used in server/middleware/route handlers.
+  - NEXT_PUBLIC_* gets inlined into client bundles; safe for anon key, but avoid service role in any NEXT_PUBLIC_*.
+
+Supabase Architecture
+
+Client creation
+- Server: lib/supabase/server.ts (cookies from next/headers)
+- Browser: lib/supabase/client.ts (unused)
+- Route handler callback uses direct @supabase/ssr createServerClient (inconsistent with local wrapper)
+
+Auth flow
+- /login triggers signInWithEmail server action, redirect to /auth/callback
+- app/auth/callback/route.ts exchanges code -> session
+- middleware.ts checks session on /app/* and /login to redirect
+
+Database
+- Tables used: topics, resources, tags, topic_tags, comments
+- Tables unused: folders, queue_items, likely profiles
+
+RLS
+- Enabled for all main tables
+- Shared select policies allow any authenticated user to see non-private topics/resources/comments
+- Current app relies on visibility and user-scoped policies for access control
+
+Storage
+- No evidence of Supabase Storage usage in code
+
+Service role
+- No service role key found in code; good
+
+Top Structural Risks (ranked)
+
+Critical
+1) Route protection can silently fail if env vars are missing (middleware.ts). Impact: unauthenticated access to /app/*.
+
+High
+2) Client-side read actions cause waterfalls and no SSR (components/queue/CommentSheet.tsx, lib/actions/discover.ts). Impact: slower UX, duplicated logic patterns, caching complexity.
+3) Inconsistent Supabase client setup (app/auth/callback/route.ts, lib/supabase/server.ts). Impact: auth cookie behavior can diverge and is harder to maintain.
+
+Medium
+4) Excessive client components (app/app/organize/page.tsx, app/app/settings/page.tsx). Impact: larger bundle, less SSR.
+5) Dead/legacy code clouds architecture (legacy-pages/*, ui-reference/*, lib/app-params.js, lib/query-client.js). Impact: confusion, onboarding cost, accidental usage.
+
+Low
+6) Inconsistent validation (lib/validation.ts). Impact: maintenance friction.
+
+Confusing / Ambiguous Areas (need your input)
+- Are legacy-pages/ and ui-reference/ intended to remain in the repo, or can they be removed?
+- Is queue_items (and folders) intended for future use? If not, should schema be simplified?
+- Should Discover comments be public to all signed-in users, or limited to followers (not currently modeled)?
+- Is the Organize page meant to be real (backed by tags or folders) or just mock UI?
+- Should we introduce a formal domain layer/types (e.g., Topic, Resource) or stay with ad hoc types in server actions?
+
+Cleanup Plan (overview only, with hypotheses)
+
+Phase 1: Consolidate Supabase client creation
+Done when app/auth/callback/route.ts and all server code use one createServerClient factory and no direct @supabase/ssr usage remains.
+Hypothesis: A single factory reduces auth cookie bugs and keeps server/client boundaries consistent.
+
+Phase 2: Remove or quarantine legacy/reference code
+Done when legacy-pages/, ui-reference/, lib/app-params.js, and lib/query-client.js are either removed or moved under an explicit archive/ folder with README context.
+Hypothesis: Removing unused code will cut onboarding time and prevent accidental imports.
+
+Phase 3: Normalize validation and error handling
+Done when all server actions use one validation API (e.g., lib/validation.ts simplified or replaced with Zod).
+Hypothesis: Consistent validation reduces duplicate logic and makes errors predictable.
+
+Phase 4: Tighten client/server boundaries
+Done when static pages render as server components unless interactivity is required, and comment loading is server-rendered or uses a dedicated API with proper cache control.
+Hypothesis: Reducing unnecessary client components improves performance and simplifies data flow.
+
+Phase 5: Define data access layer (DAL)
+Done when Supabase queries are centralized (e.g., lib/data-access/) and server actions call the DAL instead of inline queries.
+Hypothesis: Centralized queries reduce duplication and make RLS assumptions explicit.
+
+Phase 6: Align schema with product
+Done when unused tables are removed or used, and product features (Organize/Settings) are backed by DB or explicitly marked as mock.
+Hypothesis: Schema-app alignment prevents drift and keeps future changes safer.
+
+Questions I Need Answered (3-10 most important)
+1) Do you want this report written to a file despite the "Do not change files" rule, and where should it live?
+2) Should legacy-pages/ and ui-reference/ remain in the repo for reference, or be removed/archived?
+3) Is the folders table intended to power Organize, or should Organize map to tags instead?
+4) Is Discover intended to be public to all authenticated users or restricted to follower relationships?
+5) Should we introduce a formal schema/typing layer (Zod, shared types) or keep lightweight validation?
+6) Are you comfortable with server actions as the primary API layer, or do you want REST/route handlers?
+
+What I will do next once you say "Proceed"
+- Draft a concrete refactor plan with file-level changes and sequence.
+- Propose a single Supabase client factory and update all usage.
+- Identify and remove/relocate dead code and Vite-era artifacts.
+
+Optional: Golden Path Recommendation
+
+Auth + RLS best practice (for this repo)
+- Use createServerClient (with @supabase/ssr) everywhere on the server.
+- Use createBrowserClient only in true client-only features.
+- Read auth via supabase.auth.getUser() in server actions and middleware.
+- Keep NEXT_PUBLIC_SUPABASE_ANON_KEY for client, reserve service role for server-only operations if ever needed.
+Hypothesis: Following SSR + RLS with anon key keeps access consistent and minimizes accidental privilege escalation.
+
+Ideal placement
+- supabaseClient.ts: lib/supabase/server.ts and lib/supabase/client.ts (keep as the only entry points).
+- Server actions: lib/actions/* (but backed by a DAL in lib/data-access/).
+- Zod schemas: lib/validation/* or lib/schemas/*.
+- Domain/data-access layer: lib/data-access/* (one file per aggregate: topics.ts, resources.ts).
+- Shared types: lib/types/* or types/* at root.
+Hypothesis: A dedicated DAL + schemas keeps data contracts stable and reduces coupling between UI and database details.
