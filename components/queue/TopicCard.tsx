@@ -2,7 +2,7 @@ import { Bookmark, ChevronRight } from "lucide-react";
 
 type Topic = {
   title: string;
-  note?: string;
+  note?: string | null;
   tags?: string[];
   status?: "active" | "completed" | string;
   resourceCount?: number;

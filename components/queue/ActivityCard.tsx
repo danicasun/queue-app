@@ -8,7 +8,7 @@ type Activity = {
   avatarColor?: string;
   topicTitle: string;
   context?: string;
-  tag?: string;
+  tag?: string | null;
   privacyLabel?: string;
   saved?: boolean;
 };

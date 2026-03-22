@@ -2,7 +2,7 @@ import DiscoverClient from "./DiscoverClient";
 import { getDiscoverFeed } from "@/lib/actions/discover";
 
 export default async function DiscoverPage() {
-  let feed = [];
+  let feed: Awaited<ReturnType<typeof getDiscoverFeed>> = [];
   try {
     feed = await getDiscoverFeed();
   } catch {

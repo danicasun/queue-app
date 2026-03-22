@@ -3,7 +3,7 @@ import { getTopics } from "@/lib/actions/queue";
 import { getTagNames } from "@/lib/actions/tags";
 
 export default async function QueuePage() {
-  let topics = [];
+  let topics: Awaited<ReturnType<typeof getTopics>> = [];
   let availableTags: string[] = [];
   try {
     topics = await getTopics();
