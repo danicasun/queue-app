@@ -25,8 +25,9 @@ export default function TopicCard({ topic, onClick }: TopicCardProps) {
 
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`w-full text-left rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-4 active:scale-[0.98] transition-all duration-200 ${
+      className={`w-full text-left rounded-lg border border-gray-200 bg-white p-4 active:scale-[0.99] transition-transform duration-150 ${
         isCompleted ? "opacity-55" : ""
       }`}
     >

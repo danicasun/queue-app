@@ -18,6 +18,8 @@ type DiscoverItem = {
   tag: string | null;
   privacyLabel: string;
   saved: boolean;
+  createdAt: string;
+  resourceCount: number;
 };
 
 type DiscoverClientProps = {
@@ -54,18 +56,15 @@ export default function DiscoverClient({ initialFeed }: DiscoverClientProps) {
 
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
-      <div className="sticky top-0 z-20 bg-[#FAFAF8]/80 backdrop-blur-xl">
-        <div className="px-5 pt-3 pb-3">
-          <h1 className="text-[28px] font-bold text-gray-900 tracking-tight">
-            Discover
-          </h1>
-          <p className="text-[13px] text-gray-400 mt-0.5">
+      <div className="sticky top-0 z-20 bg-[#FAFAF8] border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-5 lg:px-8 pt-3 pb-3">
+          <p className="text-[13px] text-gray-500">
             Things your friends are curious about
           </p>
         </div>
       </div>
 
-      <div className="px-5 pb-28 space-y-3 pt-1">
+      <div className="max-w-4xl mx-auto px-5 lg:px-8 pb-28 lg:pb-10 space-y-3 pt-2">
         {feed.length > 0 ? (
           feed.map((item) => (
             <ActivityCard

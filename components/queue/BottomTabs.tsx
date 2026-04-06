@@ -15,8 +15,8 @@ export default function BottomTabs() {
   const pathname = usePathname();
 
   return (
-    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-40">
-      <div className="bg-white/80 backdrop-blur-xl border-t border-gray-100/60">
+    <div className="fixed bottom-0 left-0 right-0 w-full z-40 lg:hidden">
+      <div className="bg-[#FAFAF8] border-t border-gray-200">
         <div
           className="flex items-center justify-around px-2"
           style={{ paddingBottom: "env(safe-area-inset-bottom, 8px)" }}

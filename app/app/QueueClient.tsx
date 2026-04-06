@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, Plus, Sparkles } from "lucide-react";
+import { Search, Plus, List } from "lucide-react";
 import TopicCard from "@/components/queue/TopicCard";
 import EmptyState from "@/components/queue/EmptyState";
 import AddTopicSheet from "@/components/queue/AddTopicSheet";
@@ -60,23 +60,22 @@ export default function QueueClient({
 
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
-      <div className="sticky top-0 z-20 bg-[#FAFAF8]/80 backdrop-blur-xl">
-        <div className="px-5 pt-3 pb-3">
+      <div className="sticky top-0 z-20 bg-[#FAFAF8]">
+        <div className="max-w-4xl mx-auto px-5 lg:px-8 pt-3 pb-3">
           {!searchOpen ? (
-            <div className="flex items-center justify-between">
-              <h1 className="text-[28px] font-bold text-gray-900 tracking-tight">
-                My Queue
-              </h1>
+            <div className="flex items-center justify-end">
               <button
+                type="button"
                 onClick={() => setSearchOpen(true)}
-                className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center"
+                className="w-10 h-10 rounded-full border border-gray-200 bg-white flex items-center justify-center"
+                aria-label="Search topics"
               >
-                <Search className="w-4.5 h-4.5 text-gray-400" />
+                <Search className="w-4 h-4 text-gray-400" />
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="flex-1 bg-white rounded-xl shadow-sm flex items-center px-3.5 py-2.5">
+              <div className="flex-1 bg-white rounded-lg border border-gray-200 flex items-center px-3.5 py-2.5">
                 <Search className="w-4 h-4 text-gray-300 mr-2 flex-shrink-0" />
                 <input
                   autoFocus
@@ -88,11 +87,12 @@ export default function QueueClient({
                 />
               </div>
               <button
+                type="button"
                 onClick={() => {
                   setSearchOpen(false);
                   setSearchQuery("");
                 }}
-                className="text-[14px] font-medium text-[#7EB09B]"
+                className="text-[14px] font-medium text-gray-600"
               >
                 Cancel
               </button>
@@ -101,7 +101,7 @@ export default function QueueClient({
         </div>
       </div>
 
-      <div className="px-5 pb-28 space-y-3 pt-1">
+      <div className="max-w-4xl mx-auto px-5 lg:px-8 pb-28 lg:pb-10 space-y-3 pt-2">
         {filteredTopics.length > 0 ? (
           filteredTopics.map((topic) => (
             <Link
@@ -114,7 +114,7 @@ export default function QueueClient({
           ))
         ) : (
           <EmptyState
-            icon={Sparkles}
+            icon={List}
             title="Add something you're curious about."
             subtitle="Your learning queue starts here"
           />
@@ -122,8 +122,10 @@ export default function QueueClient({
       </div>
 
       <button
+        type="button"
         onClick={() => setShowAddSheet(true)}
-        className="fixed bottom-24 right-5 z-30 w-14 h-14 rounded-full bg-[#7EB09B] shadow-lg shadow-[#7EB09B]/25 flex items-center justify-center active:scale-95 transition-all duration-150"
+        className="fixed bottom-24 right-5 lg:bottom-8 lg:right-8 z-30 w-14 h-14 rounded-full bg-[#7EB09B] border border-[#6a9d86] flex items-center justify-center active:scale-95 transition-transform duration-150"
+        aria-label="Add topic"
       >
         <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
       </button>
@@ -134,7 +136,6 @@ export default function QueueClient({
         onAdd={handleAddTopic}
         availableTags={availableTags}
       />
-
     </div>
   );
 }

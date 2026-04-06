@@ -38,8 +38,24 @@ type ResourceDetail = {
 type ActionResult<T> = { data?: T; error?: string };
 
 type TopicTagRelation = {
-  tags?: { name?: string | null } | null;
+  tags?:
+    | { name?: string | null }
+    | { name?: string | null }[]
+    | null;
 };
+
+function tagNamesFromRelations(
+  relations: TopicTagRelation[] | null | undefined
+): string[] {
+  return (relations ?? []).flatMap((relation) => {
+    const t = relation.tags;
+    if (!t) return [];
+    if (Array.isArray(t)) {
+      return t.map((x) => x?.name).filter((n): n is string => Boolean(n));
+    }
+    return t.name ? [t.name] : [];
+  });
+}
 
 type TopicRowWithRelations = {
   id: string;
@@ -49,8 +65,22 @@ type TopicRowWithRelations = {
   visibility: TopicVisibility;
   created_at: string;
   topic_tags?: TopicTagRelation[] | null;
-  resources?: { count?: number }[] | null;
+  /** List queries use `{ count }[]`; detail queries use full resource rows. */
+  resources?:
+    | { count?: number }[]
+    | ResourceRowWithCreatedAt[]
+    | null;
 };
+
+function resourceCountFromRow(row: TopicRowWithRelations): number {
+  const r = row.resources;
+  if (!r || r.length === 0) return 0;
+  const first = r[0];
+  if (first && typeof first === "object" && "count" in first) {
+    return (first as { count?: number }).count ?? 0;
+  }
+  return r.length;
+}
 
 type ResourceRowWithCreatedAt = {
   id: string;
@@ -118,10 +148,8 @@ async function ensureTags(tagNames: string[]) {
 }
 
 function mapTopicRow(row: TopicRowWithRelations): TopicSummary {
-  const tags = (row.topic_tags ?? [])
-    .map((relation) => relation.tags?.name)
-    .filter(Boolean);
-  const resourceCount = row.resources?.[0]?.count ?? 0;
+  const tags = tagNamesFromRelations(row.topic_tags ?? []);
+  const resourceCount = resourceCountFromRow(row);
   return {
     id: row.id,
     title: row.title,
@@ -343,9 +371,9 @@ export async function updateTopic(payload: {
       .from("topic_tags")
       .select("tags(name)")
       .eq("topic_id", payload.id);
-    tags = (existingTags ?? [])
-      .map((relation: TopicTagRelation) => relation.tags?.name)
-      .filter(Boolean);
+    tags = tagNamesFromRelations(
+      (existingTags ?? []) as TopicTagRelation[]
+    );
   }
 
   const { count: resourceCount } = await supabase

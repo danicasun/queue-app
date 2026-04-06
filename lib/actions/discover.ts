@@ -14,6 +14,8 @@ type DiscoverItem = {
   privacyLabel: string;
   saved: boolean;
   topicId: string;
+  createdAt: string;
+  resourceCount: number;
 };
 
 type CommentItem = {
@@ -26,8 +28,24 @@ type CommentItem = {
 };
 
 type TopicTagRelation = {
-  tags?: { name?: string | null } | null;
+  tags?:
+    | { name?: string | null }
+    | { name?: string | null }[]
+    | null;
 };
+
+function tagNamesFromRelations(
+  relations: TopicTagRelation[] | null | undefined
+): string[] {
+  return (relations ?? []).flatMap((relation) => {
+    const t = relation.tags;
+    if (!t) return [];
+    if (Array.isArray(t)) {
+      return t.map((x) => x?.name).filter(Boolean) as string[];
+    }
+    return t.name ? [t.name] : [];
+  });
+}
 
 type DiscoverTopicRow = {
   id: string;
@@ -35,7 +53,9 @@ type DiscoverTopicRow = {
   note: string | null;
   visibility: string;
   user_id: string;
+  created_at: string;
   topic_tags?: TopicTagRelation[] | null;
+  resources?: { count: number }[] | null;
 };
 
 const avatarColors = [
@@ -120,7 +140,9 @@ export async function getDiscoverFeed(): Promise<DiscoverItem[]> {
 
   const { data, error } = await supabase
     .from("topics")
-    .select("id,title,note,visibility,user_id,topic_tags(tags(name))")
+    .select(
+      "id,title,note,visibility,user_id,created_at,topic_tags(tags(name)),resources(count)"
+    )
     .neq("visibility", "private")
     .neq("user_id", user.id)
     .order("created_at", { ascending: false });
@@ -128,14 +150,14 @@ export async function getDiscoverFeed(): Promise<DiscoverItem[]> {
   if (error) throw new Error(error.message);
 
   return (data ?? []).map((topic: DiscoverTopicRow) => {
-    const tags = (topic.topic_tags ?? [])
-      .map((relation) => relation.tags?.name)
-      .filter(Boolean);
+    const tags = tagNamesFromRelations(topic.topic_tags ?? []);
     const visibleNote =
       topic.visibility === "topic_and_notes" ||
       topic.visibility === "topic_and_resources"
         ? topic.note ?? ""
         : "";
+    const resourceCount =
+      topic.resources?.[0]?.count != null ? topic.resources[0].count : 0;
     return {
       id: topic.id,
       topicId: topic.id,
@@ -145,7 +167,9 @@ export async function getDiscoverFeed(): Promise<DiscoverItem[]> {
       context: visibleNote,
       tag: tags[0] ?? null,
       privacyLabel: visibilityLabel(topic.visibility),
-      saved: false
+      saved: false,
+      createdAt: topic.created_at,
+      resourceCount
     };
   });
 }
@@ -181,9 +205,7 @@ export async function saveTopicToQueue(topicId: string) {
     return { error: createError?.message ?? "Unable to save topic." };
   }
 
-  const tags = (topic.topic_tags ?? [])
-    .map((relation: TopicTagRelation) => relation.tags?.name)
-    .filter(Boolean);
+  const tags = tagNamesFromRelations(topic.topic_tags ?? []);
   const ensuredTags = await ensureTagsForUser(user.id, tags);
   if (ensuredTags.length > 0) {
     const { error: tagError } = await supabase.from("topic_tags").insert(

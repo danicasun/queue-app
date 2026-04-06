@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Tag, Plus, Pencil, Trash2, Sparkles } from "lucide-react";
+import { Tag, Plus, Pencil, Trash2 } from "lucide-react";
 import EmptyState from "@/components/queue/EmptyState";
 import TopicCard from "@/components/queue/TopicCard";
 import { toast } from "@/lib/toast";
@@ -166,16 +166,16 @@ export default function OrganizeClient({
 
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
-      <div className="sticky top-0 z-20 bg-[#FAFAF8]/80 backdrop-blur-xl">
-        <div className="px-5 pt-3 pb-3">
-          <h1 className="text-[28px] font-bold text-gray-900 tracking-tight">
+      <div className="sticky top-0 z-20 bg-[#FAFAF8] border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-5 lg:px-8 pt-3 pb-3">
+          <h1 className="text-[22px] font-semibold text-gray-900 tracking-tight">
             Organize
           </h1>
-          <p className="text-[13px] text-gray-400 mt-0.5">Tags</p>
+          <p className="text-[13px] text-gray-500 mt-0.5">Tags</p>
         </div>
       </div>
 
-      <div className="px-5 pb-28 pt-2">
+      <div className="max-w-4xl mx-auto px-5 lg:px-8 pb-28 lg:pb-10 pt-2">
         <button
           onClick={handleAdd}
           className="w-full flex items-center gap-3 py-3 mb-2 text-[#7EB09B]"
@@ -193,7 +193,7 @@ export default function OrganizeClient({
             subtitle="Add a tag to organize your topics"
           />
         ) : (
-          <div className="bg-white rounded-2xl shadow-sm divide-y divide-gray-50">
+          <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
             {folders.map((item) => (
               <div
                 key={item.id}
@@ -282,7 +282,7 @@ export default function OrganizeClient({
                 Done
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto bg-[#FAFAF8] px-5 pb-28 pt-3">
+            <div className="flex-1 overflow-y-auto bg-[#FAFAF8] px-5 pb-28 lg:pb-10 pt-3 max-w-4xl mx-auto w-full">
               {loadingTopics ? (
                 <p className="text-[13px] text-gray-400">Loading topics...</p>
               ) : tagTopics.length > 0 ? (
@@ -300,7 +300,7 @@ export default function OrganizeClient({
                 </div>
               ) : (
                 <EmptyState
-                  icon={Sparkles}
+                  icon={Tag}
                   title="No topics for this tag."
                   subtitle="Add this tag to a topic to see it here."
                 />

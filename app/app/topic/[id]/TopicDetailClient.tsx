@@ -225,11 +225,11 @@ export default function TopicDetailClient({
 
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
-      <div className="sticky top-0 z-20 bg-[#FAFAF8]/80 backdrop-blur-xl">
-        <div className="px-2 pt-3 pb-3 flex items-center gap-1">
+      <div className="sticky top-0 z-20 bg-[#FAFAF8] border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-2 lg:px-8 pt-3 pb-3 flex items-center gap-1">
           <Link
             href={backHref}
-            className="flex items-center gap-0.5 text-[#7EB09B] px-2 py-2 -ml-1"
+            className="flex items-center gap-0.5 text-gray-700 hover:text-gray-900 px-2 py-2 -ml-1"
           >
             <ChevronLeft className="w-5 h-5" />
             <span className="text-[15px] font-medium">
@@ -239,7 +239,7 @@ export default function TopicDetailClient({
         </div>
       </div>
 
-      <div className="px-5 pb-28">
+      <div className="max-w-4xl mx-auto px-5 lg:px-8 pb-28 lg:pb-10">
         <input
           type="text"
           value={title}
@@ -258,8 +258,9 @@ export default function TopicDetailClient({
         />
 
         <button
+          type="button"
           onClick={handleToggleVisibility}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white shadow-sm mb-8"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-gray-200 mb-8"
         >
           <VisibilityIcon className="w-3.5 h-3.5 text-gray-400" />
           <span className="text-[12px] font-medium text-gray-600">
