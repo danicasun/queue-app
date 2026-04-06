@@ -17,6 +17,15 @@ function initials(name: string) {
   return t ? t[0]!.toUpperCase() : "?";
 }
 
+function websiteHref(raw: string): string {
+  const t = raw.trim();
+  return t.startsWith("http") ? t : `https://${t}`;
+}
+
+function xProfileUrl(handle: string): string {
+  return `https://x.com/${handle.trim()}`;
+}
+
 export default function AppSidebar({ tags, profile }: AppSidebarProps) {
   const website = profile.websiteUrl?.trim() || null;
   const twitter = profile.twitterHandle?.trim() || null;
@@ -45,23 +54,25 @@ export default function AppSidebar({ tags, profile }: AppSidebarProps) {
           </div>
           {website && (
             <a
-              href={website.startsWith("http") ? website : `https://${website}`}
+              href={websiteHref(website)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[12px] text-gray-600 hover:text-gray-900 inline-flex items-center gap-1 mt-1"
+              title={websiteHref(website)}
+              className="text-[12px] text-gray-600 hover:text-gray-900 inline-flex items-start gap-1 mt-1 max-w-full min-w-0"
             >
-              Website
-              <ExternalLink className="w-3 h-3 opacity-60" />
+              <span className="break-all">{websiteHref(website)}</span>
+              <ExternalLink className="w-3 h-3 opacity-60 flex-shrink-0 mt-0.5" />
             </a>
           )}
           {twitter && (
             <a
-              href={`https://x.com/${twitter}`}
+              href={xProfileUrl(twitter)}
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-[12px] text-gray-600 hover:text-gray-900 mt-1"
+              title={xProfileUrl(twitter)}
+              className="block text-[12px] text-gray-600 hover:text-gray-900 mt-1 break-all"
             >
-              @{twitter}
+              {xProfileUrl(twitter)}
             </a>
           )}
           {!website && !twitter && (
