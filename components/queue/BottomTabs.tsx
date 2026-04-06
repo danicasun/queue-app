@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { List, Compass, FolderOpen, Settings } from "lucide-react";
+import { List, Compass, Settings } from "lucide-react";
 
 const tabs = [
   { name: "Queue", href: "/app", icon: List },
   { name: "Discover", href: "/app/discover", icon: Compass },
-  { name: "Organize", href: "/app/organize", icon: FolderOpen },
   { name: "Settings", href: "/app/settings", icon: Settings }
 ];
 
@@ -18,8 +17,8 @@ export default function BottomTabs() {
     <div className="fixed bottom-0 left-0 right-0 w-full z-40 lg:hidden">
       <div className="bg-[#FAFAF8] border-t border-gray-200">
         <div
-          className="flex items-center justify-around px-2"
-          style={{ paddingBottom: "env(safe-area-inset-bottom, 8px)" }}
+          className="grid grid-cols-3 gap-0 px-1"
+          style={{ paddingBottom: "max(8px, env(safe-area-inset-bottom))" }}
         >
           {tabs.map((tab) => {
             const isActive =
@@ -32,16 +31,16 @@ export default function BottomTabs() {
               <Link
                 key={tab.name}
                 href={tab.href}
-                className={`flex flex-col items-center gap-0.5 py-2 px-4 min-w-[60px] transition-colors ${
+                className={`flex flex-col items-center justify-center gap-0.5 py-2 min-w-0 transition-colors ${
                   isActive ? "text-[#7EB09B]" : "text-gray-400"
                 }`}
               >
                 <Icon
-                  className="w-[22px] h-[22px]"
+                  className="w-[20px] h-[20px] flex-shrink-0"
                   strokeWidth={isActive ? 2.2 : 1.8}
                 />
                 <span
-                  className={`text-[10px] ${
+                  className={`text-[9px] sm:text-[10px] leading-tight text-center truncate max-w-full px-0.5 ${
                     isActive ? "font-semibold" : "font-medium"
                   }`}
                 >

@@ -67,6 +67,8 @@ create table if not exists comments (
 create table if not exists profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   display_name text not null default 'Anonymous',
+  website_url text,
+  twitter_handle text,
   created_at timestamptz not null default now()
 );
 
@@ -275,3 +277,20 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Add profile URL fields on existing databases (idempotent)
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'profiles' and column_name = 'website_url'
+  ) then
+    alter table public.profiles add column website_url text;
+  end if;
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'profiles' and column_name = 'twitter_handle'
+  ) then
+    alter table public.profiles add column twitter_handle text;
+  end if;
+end $$;

@@ -167,11 +167,10 @@ export default function OrganizeClient({
   return (
     <div className="min-h-screen bg-[#FAFAF8]">
       <div className="sticky top-0 z-20 bg-[#FAFAF8] border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-5 lg:px-8 pt-3 pb-3">
-          <h1 className="text-[22px] font-semibold text-gray-900 tracking-tight">
-            Organize
-          </h1>
-          <p className="text-[13px] text-gray-500 mt-0.5">Tags</p>
+        <div className="max-w-4xl mx-auto w-full px-5 lg:px-8 pt-3 pb-3 text-left">
+          <p className="text-[13px] text-gray-500 text-left">
+            Create and rename tags to group topics
+          </p>
         </div>
       </div>
 
