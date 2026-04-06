@@ -77,6 +77,7 @@ export default function TopicDetailClient({
   );
   const [showTagPicker, setShowTagPicker] = useState(false);
   const [tagSearch, setTagSearch] = useState("");
+  const [newTagInput, setNewTagInput] = useState("");
   const [showAddResource, setShowAddResource] = useState(false);
 
   const visibilityOption = useMemo(() => {
@@ -105,16 +106,17 @@ export default function TopicDetailClient({
     }
   };
 
-  const handleAddTag = async (tagName: string) => {
+  const handleAddTag = async (tagName: string): Promise<boolean> => {
     const nextTags = [...selectedTags, tagName];
     setSelectedTags(nextTags);
     const result = await updateTopic({ id: topic.id, tags: nextTags });
     if (result.error) {
       toast.error(result.error);
       setSelectedTags(selectedTags);
-      return;
+      return false;
     }
     toast.success("Tag added.");
+    return true;
   };
 
   const handleRemoveTag = async (tagName: string) => {
@@ -132,13 +134,32 @@ export default function TopicDetailClient({
   const availableMatches = useMemo(() => {
     const normalizedQuery = tagSearch.trim().toLowerCase();
     const remaining = availableTags.filter(
-      (tag) => !selectedTags.includes(tag)
+      (tag) =>
+        !selectedTags.some(
+          (s) => s.toLowerCase() === tag.toLowerCase()
+        )
     );
     if (!normalizedQuery) return remaining;
     return remaining.filter((tag) =>
       tag.toLowerCase().includes(normalizedQuery)
     );
   }, [availableTags, selectedTags, tagSearch]);
+
+  const addNewTagFromInput = async () => {
+    const trimmed = newTagInput.trim();
+    if (!trimmed) return;
+    if (
+      selectedTags.some((s) => s.toLowerCase() === trimmed.toLowerCase())
+    ) {
+      toast.error("This topic already has that tag.");
+      return;
+    }
+    const ok = await handleAddTag(trimmed);
+    if (ok) {
+      setNewTagInput("");
+      setShowTagPicker(false);
+    }
+  };
 
   const handleTitleBlur = async () => {
     if (title.trim() === savedTitle) return;
@@ -278,9 +299,13 @@ export default function TopicDetailClient({
               Tags
             </h2>
             <button
-              onClick={() => setShowTagPicker(true)}
-              className="text-[12px] font-medium text-[#7EB09B]"
-              disabled={availableTags.length === 0}
+              type="button"
+              onClick={() => {
+                setTagSearch("");
+                setNewTagInput("");
+                setShowTagPicker(true);
+              }}
+              className="text-[12px] font-medium text-gray-700 hover:text-gray-900"
             >
               Add tag
             </button>
@@ -299,7 +324,7 @@ export default function TopicDetailClient({
             </div>
           ) : (
             <p className="text-[12px] text-gray-400">
-              No tags yet. Add one from your existing tags.
+              No tags yet. Add an existing tag or create a new one.
             </p>
           )}
         </div>
@@ -358,50 +383,98 @@ export default function TopicDetailClient({
       {showTagPicker && (
         <>
           <div
-            className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-40"
+            className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[60]"
             onClick={() => setShowTagPicker(false)}
+            aria-hidden
           />
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#FAFAF8] rounded-t-3xl">
-            <div className="px-5 pt-4 pb-5">
-              <div className="flex items-center justify-between mb-3">
+          <div className="fixed bottom-0 left-0 right-0 z-[70] bg-[#FAFAF8] rounded-t-3xl max-h-[85vh] overflow-y-auto shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
+            <div
+              className="px-5 pt-4 pb-6"
+              style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
+            >
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[17px] font-semibold text-gray-900">
                   Add tag
                 </h3>
                 <button
+                  type="button"
                   onClick={() => setShowTagPicker(false)}
-                  className="text-[13px] font-medium text-[#7EB09B]"
+                  className="text-[13px] font-medium text-gray-600"
                 >
                   Done
                 </button>
               </div>
-              <input
-                type="text"
-                value={tagSearch}
-                onChange={(event) => setTagSearch(event.target.value)}
-                placeholder="Search tags..."
-                className="w-full text-[14px] text-gray-700 placeholder:text-gray-300 bg-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#7EB09B]/30 transition-all"
-              />
-              <div className="mt-4 max-h-[40vh] overflow-y-auto space-y-2">
-                {availableMatches.length > 0 ? (
-                  availableMatches.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => {
-                        handleAddTag(tag);
-                        setTagSearch("");
-                        setShowTagPicker(false);
-                      }}
-                      className="w-full text-left px-4 py-3 rounded-xl bg-white shadow-sm text-[14px] text-gray-700"
-                    >
-                      {tag}
-                    </button>
-                  ))
-                ) : (
-                  <p className="text-[12px] text-gray-400 px-2">
-                    No matching tags.
-                  </p>
-                )}
+
+              <div className="mb-5">
+                <label className="text-[11px] font-medium text-gray-400 uppercase tracking-wider block mb-2">
+                  New tag
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newTagInput}
+                    onChange={(event) => setNewTagInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void addNewTagFromInput();
+                      }
+                    }}
+                    placeholder="Type a name, press Enter"
+                    className="flex-1 text-[14px] text-gray-800 placeholder:text-gray-300 bg-white rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void addNewTagFromInput()}
+                    disabled={!newTagInput.trim()}
+                    className="px-4 py-3 rounded-xl text-[13px] font-medium border border-gray-200 bg-white text-gray-800 disabled:opacity-40"
+                  >
+                    Add
+                  </button>
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1.5">
+                  Creates the tag if it does not exist yet.
+                </p>
               </div>
+
+              {availableTags.length > 0 && (
+                <>
+                  <label className="text-[11px] font-medium text-gray-400 uppercase tracking-wider block mb-2">
+                    Your tags
+                  </label>
+                  <input
+                    type="text"
+                    value={tagSearch}
+                    onChange={(event) => setTagSearch(event.target.value)}
+                    placeholder="Search…"
+                    className="w-full text-[14px] text-gray-700 placeholder:text-gray-300 bg-white rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-gray-200 mb-3"
+                  />
+                  <div className="max-h-[36vh] overflow-y-auto space-y-2">
+                    {availableMatches.length > 0 ? (
+                      availableMatches.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={async () => {
+                            const ok = await handleAddTag(tag);
+                            if (ok) {
+                              setTagSearch("");
+                              setShowTagPicker(false);
+                            }
+                          }}
+                          className="w-full text-left px-4 py-3 rounded-xl bg-white border border-gray-200 text-[14px] text-gray-700 hover:bg-gray-50"
+                        >
+                          {tag}
+                        </button>
+                      ))
+                    ) : (
+                      <p className="text-[12px] text-gray-400 px-1 py-2">
+                        No matching tags. Use “New tag” above.
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </>
