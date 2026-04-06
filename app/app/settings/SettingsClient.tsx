@@ -95,6 +95,33 @@ export default function SettingsClient({ profile }: SettingsClientProps) {
               </div>
               <div>
                 <label className="text-[12px] text-gray-500 block mb-1">
+                  Your user ID
+                </label>
+                <p className="text-[11px] text-gray-400 mb-1.5">
+                  Friends paste this in Friends → Add a friend to send you a
+                  request.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={profile.userId}
+                    className="flex-1 text-[12px] text-gray-700 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(profile.userId);
+                      toast.success("Copied");
+                    }}
+                    className="px-3 py-2 rounded-lg border border-gray-200 text-[13px] font-medium text-gray-700 hover:bg-gray-50 flex-shrink-0"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="text-[12px] text-gray-500 block mb-1">
                   Personal website
                 </label>
                 <input

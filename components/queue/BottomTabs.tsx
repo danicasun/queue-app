@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { List, Compass, Settings } from "lucide-react";
+import { List, Compass, Users, Settings } from "lucide-react";
 
 const tabs = [
   { name: "Queue", href: "/app", icon: List },
   { name: "Discover", href: "/app/discover", icon: Compass },
+  { name: "Friends", href: "/app/friends", icon: Users },
   { name: "Settings", href: "/app/settings", icon: Settings }
 ];
 
@@ -17,7 +18,7 @@ export default function BottomTabs() {
     <div className="fixed bottom-0 left-0 right-0 w-full z-40 lg:hidden">
       <div className="bg-[#FAFAF8] border-t border-gray-200">
         <div
-          className="grid grid-cols-3 gap-0 px-1"
+          className="grid grid-cols-4 gap-0 px-0.5"
           style={{ paddingBottom: "max(8px, env(safe-area-inset-bottom))" }}
         >
           {tabs.map((tab) => {
@@ -36,11 +37,11 @@ export default function BottomTabs() {
                 }`}
               >
                 <Icon
-                  className="w-[20px] h-[20px] flex-shrink-0"
+                  className="w-[19px] h-[19px] flex-shrink-0"
                   strokeWidth={isActive ? 2.2 : 1.8}
                 />
                 <span
-                  className={`text-[9px] sm:text-[10px] leading-tight text-center truncate max-w-full px-0.5 ${
+                  className={`text-[8px] sm:text-[9px] leading-tight text-center truncate max-w-full px-0.5 ${
                     isActive ? "font-semibold" : "font-medium"
                   }`}
                 >

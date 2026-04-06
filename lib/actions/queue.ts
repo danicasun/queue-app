@@ -164,11 +164,13 @@ function mapTopicRow(row: TopicRowWithRelations): TopicSummary {
 
 export async function getTopics(): Promise<TopicSummary[]> {
   const supabase = createServerClient();
+  const userId = await requireUserId();
   const { data, error } = await supabase
     .from("topics")
     .select(
       "id,title,note,status,visibility,created_at,topic_tags(tags(name)),resources(count)"
     )
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
   if (error) {

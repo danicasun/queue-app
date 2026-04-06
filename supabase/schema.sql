@@ -79,6 +79,16 @@ create table if not exists queue_items (
   primary key (user_id, topic_id)
 );
 
+create table if not exists friendships (
+  id uuid primary key default gen_random_uuid(),
+  requester_id uuid not null references auth.users(id) on delete cascade,
+  addressee_id uuid not null references auth.users(id) on delete cascade,
+  status text not null check (status in ('pending', 'accepted')) default 'pending',
+  created_at timestamptz not null default now(),
+  constraint friendships_distinct_users check (requester_id <> addressee_id),
+  constraint friendships_unique_pair unique (requester_id, addressee_id)
+);
+
 create index if not exists topics_user_id_idx on topics(user_id);
 create index if not exists topics_visibility_idx on topics(visibility);
 create index if not exists resources_topic_id_idx on resources(topic_id);
@@ -88,6 +98,9 @@ create index if not exists topic_tags_tag_id_idx on topic_tags(tag_id);
 create index if not exists comments_topic_id_idx on comments(topic_id);
 create index if not exists queue_items_user_id_idx on queue_items(user_id);
 create index if not exists queue_items_topic_id_idx on queue_items(topic_id);
+create index if not exists friendships_requester_idx on friendships(requester_id);
+create index if not exists friendships_addressee_idx on friendships(addressee_id);
+create index if not exists friendships_status_idx on friendships(status);
 
 alter table folders enable row level security;
 alter table topics enable row level security;
@@ -97,6 +110,19 @@ alter table topic_tags enable row level security;
 alter table comments enable row level security;
 alter table profiles enable row level security;
 alter table queue_items enable row level security;
+alter table friendships enable row level security;
+
+create policy "friendships_select_participants" on friendships
+  for select using (requester_id = auth.uid() or addressee_id = auth.uid());
+
+create policy "friendships_insert_requester" on friendships
+  for insert with check (requester_id = auth.uid());
+
+create policy "friendships_update_participant" on friendships
+  for update using (requester_id = auth.uid() or addressee_id = auth.uid());
+
+create policy "friendships_delete_participant" on friendships
+  for delete using (requester_id = auth.uid() or addressee_id = auth.uid());
 
 create policy "profiles_select_authenticated" on profiles
   for select using (auth.uid() is not null);

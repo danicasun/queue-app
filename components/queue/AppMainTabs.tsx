@@ -6,16 +6,21 @@ import { usePathname } from "next/navigation";
 const tabs = [
   { label: "Queue", href: "/app" },
   { label: "Discover", href: "/app/discover" },
+  { label: "Friends", href: "/app/friends" },
   { label: "Organize", href: "/app/organize" }
 ] as const;
 
 export default function AppMainTabs() {
   const pathname = usePathname();
 
+  const hideOnProfile =
+    pathname?.startsWith("/app/u/") || pathname?.startsWith("/app/topic/");
   const showTabs =
-    pathname === "/app" ||
-    pathname === "/app/discover" ||
-    pathname?.startsWith("/app/organize");
+    !hideOnProfile &&
+    (pathname === "/app" ||
+      pathname === "/app/discover" ||
+      pathname === "/app/friends" ||
+      pathname?.startsWith("/app/organize"));
 
   if (!showTabs) {
     return null;
@@ -23,7 +28,7 @@ export default function AppMainTabs() {
 
   return (
     <div className="border-b border-gray-200 bg-[#FAFAF8] px-5 lg:px-8 pt-6">
-      <nav className="flex gap-6 sm:gap-8 max-w-4xl mx-auto w-full">
+      <nav className="flex flex-wrap gap-x-5 gap-y-2 sm:gap-8 max-w-4xl mx-auto w-full">
         {tabs.map((tab) => {
           const isActive =
             tab.href === "/app"

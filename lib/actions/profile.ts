@@ -6,6 +6,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { normalizeUrl, validateRequiredText, validateUrl } from "@/lib/validation";
 
 export type PublicProfile = {
+  userId: string;
   displayName: string;
   websiteUrl: string | null;
   twitterHandle: string | null;
@@ -74,6 +75,7 @@ export async function getMyProfile(): Promise<PublicProfile | null> {
 
     if (insertError || !inserted) {
       return {
+        userId: user.id,
         displayName: fallback,
         websiteUrl: null,
         twitterHandle: null,
@@ -82,6 +84,7 @@ export async function getMyProfile(): Promise<PublicProfile | null> {
     }
 
     return {
+      userId: user.id,
       displayName: inserted.display_name,
       websiteUrl: inserted.website_url ?? null,
       twitterHandle: inserted.twitter_handle ?? null,
@@ -90,6 +93,7 @@ export async function getMyProfile(): Promise<PublicProfile | null> {
   }
 
   return {
+    userId: user.id,
     displayName: profile.display_name,
     websiteUrl: profile.website_url ?? null,
     twitterHandle: profile.twitter_handle ?? null,
