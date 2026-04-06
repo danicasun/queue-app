@@ -25,6 +25,8 @@ type TopicSummary = {
 
 type TopicDetail = TopicSummary & {
   resources: ResourceDetail[];
+  /** Topic author; used to show read-only UI for viewers. */
+  ownerUserId: string;
 };
 
 type ResourceDetail = {
@@ -206,7 +208,7 @@ export async function getTopicWithResources(
   const { data, error } = await supabase
     .from("topics")
     .select(
-      "id,title,note,status,visibility,created_at,topic_tags(tags(name)),resources(id,title,url,note,created_at)"
+      "id,user_id,title,note,status,visibility,created_at,topic_tags(tags(name)),resources(id,title,url,note,created_at)"
     )
     .eq("id", topicId)
     .single();
@@ -219,6 +221,7 @@ export async function getTopicWithResources(
   }
 
   const topic = mapTopicRow(data);
+  const ownerUserId = (data as { user_id: string }).user_id;
   const resources = (data.resources ?? [])
     .map((resource: ResourceRowWithCreatedAt) => ({
       id: resource.id,
@@ -231,7 +234,7 @@ export async function getTopicWithResources(
       a.createdAt.localeCompare(b.createdAt)
     );
 
-  return { ...topic, resources };
+  return { ...topic, resources, ownerUserId };
 }
 
 export async function createTopic(payload: {

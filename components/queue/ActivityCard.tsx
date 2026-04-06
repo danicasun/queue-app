@@ -1,6 +1,7 @@
 "use client";
 
 import type { MouseEvent } from "react";
+import Link from "next/link";
 import { Check, MessageCircle, Lock } from "lucide-react";
 
 type Activity = {
@@ -19,6 +20,8 @@ type ActivityCardProps = {
   activity: Activity;
   onSave?: (nextSaved: boolean) => void;
   onOpenComments: () => void;
+  /** When set, title and body link to this topic (e.g. Discover). */
+  topicHref?: string;
 };
 
 function formatRelativeTime(iso: string): string {
@@ -38,7 +41,8 @@ function formatRelativeTime(iso: string): string {
 export default function ActivityCard({
   activity,
   onSave,
-  onOpenComments
+  onOpenComments,
+  topicHref
 }: ActivityCardProps) {
   const saved = Boolean(activity.saved);
   const timeLabel =
@@ -46,12 +50,19 @@ export default function ActivityCard({
   const resourceCount = activity.resourceCount ?? 0;
 
   const handleSave = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
     event.stopPropagation();
     onSave?.(!saved);
   };
 
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
+  const handleOpenComments = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onOpenComments();
+  };
+
+  const mainBlock = (
+    <>
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-3 min-w-0">
           <div
@@ -74,7 +85,7 @@ export default function ActivityCard({
         )}
       </div>
 
-      <h3 className="text-[17px] font-semibold text-gray-900 tracking-tight leading-snug mb-2">
+      <h3 className="text-[17px] font-semibold text-gray-900 tracking-tight leading-snug mb-2 group-hover:text-gray-700">
         {activity.topicTitle}
       </h3>
       {activity.context ? (
@@ -83,7 +94,7 @@ export default function ActivityCard({
         </p>
       ) : null}
 
-      <div className="flex items-center gap-2 mb-3 flex-wrap text-[11px] text-gray-400">
+      <div className="flex items-center gap-2 mb-0 flex-wrap text-[11px] text-gray-400">
         {activity.tag && (
           <span className="inline-block px-2 py-0.5 rounded border border-gray-200 text-[10px] font-medium uppercase tracking-wide text-gray-600">
             {activity.tag}
@@ -99,8 +110,23 @@ export default function ActivityCard({
           </span>
         )}
       </div>
+    </>
+  );
 
-      <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+      {topicHref ? (
+        <Link
+          href={topicHref}
+          className="block p-4 text-left hover:bg-gray-50/80 transition-colors group"
+        >
+          {mainBlock}
+        </Link>
+      ) : (
+        <div className="p-4">{mainBlock}</div>
+      )}
+
+      <div className="flex items-center gap-2 px-4 pb-4 pt-3 border-t border-gray-100">
         <button
           type="button"
           onClick={handleSave}
@@ -121,7 +147,7 @@ export default function ActivityCard({
         </button>
         <button
           type="button"
-          onClick={onOpenComments}
+          onClick={handleOpenComments}
           className="flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-lg border border-gray-200 bg-white text-[13px] font-medium text-gray-600 hover:bg-gray-50"
           aria-label="Comments"
         >

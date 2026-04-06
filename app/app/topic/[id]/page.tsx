@@ -2,6 +2,7 @@ import Link from "next/link";
 import TopicDetailClient from "./TopicDetailClient";
 import { getTopicWithResources } from "@/lib/actions/queue";
 import { getTagNames } from "@/lib/actions/tags";
+import { createServerClient } from "@/lib/supabase/server";
 
 type PageProps = {
   params: { id: string };
@@ -32,15 +33,32 @@ export default async function TopicDetailPage({
     );
   }
 
+  const supabase = createServerClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  const isOwner = Boolean(user?.id && user.id === topic.ownerUserId);
+
   const fromOrganize = searchParams?.from === "organize";
+  const fromDiscover = searchParams?.from === "discover";
   const backHref = fromOrganize
     ? `/app/organize${searchParams?.tag ? `?tag=${encodeURIComponent(searchParams.tag)}` : ""}`
-    : "/app";
+    : fromDiscover
+      ? "/app/discover"
+      : "/app";
+  const backLabel = fromOrganize
+    ? "Organize"
+    : fromDiscover
+      ? "Discover"
+      : "Queue";
+
   return (
     <TopicDetailClient
       topic={topic}
       availableTags={availableTags}
       backHref={backHref}
+      backLabel={backLabel}
+      isOwner={isOwner}
     />
   );
 }

@@ -26,12 +26,15 @@ type TopicDetail = {
     url: string | null;
     note: string | null;
   }[];
+  ownerUserId?: string;
 };
 
 type TopicDetailClientProps = {
   topic: TopicDetail;
   availableTags: string[];
   backHref: string;
+  backLabel: string;
+  isOwner: boolean;
 };
 
 const visibilityOptions = [
@@ -64,7 +67,9 @@ const visibilityOptions = [
 export default function TopicDetailClient({
   topic,
   availableTags,
-  backHref
+  backHref,
+  backLabel,
+  isOwner
 }: TopicDetailClientProps) {
   const [title, setTitle] = useState(topic.title);
   const [note, setNote] = useState(topic.note ?? "");
@@ -253,9 +258,7 @@ export default function TopicDetailClient({
             className="flex items-center gap-0.5 text-gray-700 hover:text-gray-900 px-2 py-2 -ml-1"
           >
             <ChevronLeft className="w-5 h-5" />
-            <span className="text-[15px] font-medium">
-              {backHref.startsWith("/app/organize") ? "Organize" : "Queue"}
-            </span>
+            <span className="text-[15px] font-medium">{backLabel}</span>
           </Link>
         </div>
       </div>
@@ -264,67 +267,96 @@ export default function TopicDetailClient({
         <input
           type="text"
           value={title}
+          readOnly={!isOwner}
           onChange={(event) => setTitle(event.target.value)}
           onBlur={handleTitleBlur}
-          className="w-full text-[22px] font-bold text-gray-900 tracking-tight bg-transparent outline-none mb-2 leading-tight"
+          className="w-full text-[22px] font-bold text-gray-900 tracking-tight bg-transparent outline-none mb-2 leading-tight read-only:cursor-default"
         />
 
         <textarea
           value={note}
+          readOnly={!isOwner}
           onChange={(event) => setNote(event.target.value)}
           onBlur={handleNoteBlur}
-          placeholder="Add a note..."
+          placeholder={isOwner ? "Add a note..." : undefined}
           rows={3}
-          className="w-full text-[14px] text-gray-500 leading-relaxed bg-transparent outline-none resize-none mb-5 placeholder:text-gray-300"
+          className="w-full text-[14px] text-gray-500 leading-relaxed bg-transparent outline-none resize-none mb-5 placeholder:text-gray-300 read-only:cursor-default"
         />
 
-        <button
-          type="button"
-          onClick={handleToggleVisibility}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-gray-200 mb-8"
-        >
-          <VisibilityIcon className="w-3.5 h-3.5 text-gray-400" />
-          <span className="text-[12px] font-medium text-gray-600">
-            {visibilityOption.label}
-          </span>
-          <span className="text-[11px] text-gray-300">·</span>
-          <span className="text-[11px] text-gray-400">
-            {visibilityOption.desc}
-          </span>
-        </button>
+        {isOwner ? (
+          <button
+            type="button"
+            onClick={handleToggleVisibility}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-gray-200 mb-8"
+          >
+            <VisibilityIcon className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-[12px] font-medium text-gray-600">
+              {visibilityOption.label}
+            </span>
+            <span className="text-[11px] text-gray-300">·</span>
+            <span className="text-[11px] text-gray-400">
+              {visibilityOption.desc}
+            </span>
+          </button>
+        ) : (
+          <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-gray-200 mb-8">
+            <VisibilityIcon className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-[12px] font-medium text-gray-600">
+              {visibilityOption.label}
+            </span>
+            <span className="text-[11px] text-gray-300">·</span>
+            <span className="text-[11px] text-gray-400">
+              {visibilityOption.desc}
+            </span>
+          </div>
+        )}
 
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider">
               Tags
             </h2>
-            <button
-              type="button"
-              onClick={() => {
-                setTagSearch("");
-                setNewTagInput("");
-                setShowTagPicker(true);
-              }}
-              className="text-[12px] font-medium text-gray-700 hover:text-gray-900"
-            >
-              Add tag
-            </button>
+            {isOwner ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setTagSearch("");
+                  setNewTagInput("");
+                  setShowTagPicker(true);
+                }}
+                className="text-[12px] font-medium text-gray-700 hover:text-gray-900"
+              >
+                Add tag
+              </button>
+            ) : null}
           </div>
           {selectedTags.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {selectedTags.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => handleRemoveTag(tag)}
-                  className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#7EB09B] text-white transition-all"
-                >
-                  {tag}
-                </button>
-              ))}
+              {selectedTags.map((tag) =>
+                isOwner ? (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#7EB09B] text-white transition-all"
+                  >
+                    {tag}
+                  </button>
+                ) : (
+                  <span
+                    key={tag}
+                    className="px-3 py-1.5 rounded-full text-[12px] font-medium bg-[#7EB09B]/15 text-[#5a8f7a]"
+                  >
+                    {tag}
+                  </span>
+                )
+              )}
             </div>
           ) : (
             <p className="text-[12px] text-gray-400">
-              No tags yet. Add an existing tag or create a new one.
+              {isOwner
+                ? "No tags yet. Add an existing tag or create a new one."
+                : "No tags on this topic."}
             </p>
           )}
         </div>
@@ -334,13 +366,16 @@ export default function TopicDetailClient({
             <h2 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider">
               Resources
             </h2>
-            <button
-              onClick={() => setShowAddResource(true)}
-              className="flex items-center gap-1.5 text-[13px] font-medium text-[#7EB09B]"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add resource
-            </button>
+            {isOwner ? (
+              <button
+                type="button"
+                onClick={() => setShowAddResource(true)}
+                className="flex items-center gap-1.5 text-[13px] font-medium text-[#7EB09B]"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add resource
+              </button>
+            ) : null}
           </div>
 
           {resources.length > 0 ? (
@@ -354,33 +389,47 @@ export default function TopicDetailClient({
                     note: resource.note ?? ""
                   }}
                   onOpen={() => handleOpenResource(resource.url)}
-                  onMore={() => handleDeleteResource(resource.id)}
+                  onMore={
+                    isOwner ? () => handleDeleteResource(resource.id) : undefined
+                  }
+                  showMore={isOwner}
                 />
               ))}
             </div>
           ) : (
-            <EmptyState title="Add a resource when you find something useful." />
+            <EmptyState
+              title={
+                isOwner
+                  ? "Add a resource when you find something useful."
+                  : "No resources shared on this topic."
+              }
+            />
           )}
         </div>
 
-        <div className="pt-8 pb-4">
-          <button
-            onClick={handleDeleteTopic}
-            className="flex items-center gap-2 text-[13px] text-red-400 font-medium mx-auto"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            Delete topic
-          </button>
-        </div>
+        {isOwner ? (
+          <div className="pt-8 pb-4">
+            <button
+              type="button"
+              onClick={handleDeleteTopic}
+              className="flex items-center gap-2 text-[13px] text-red-400 font-medium mx-auto"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Delete topic
+            </button>
+          </div>
+        ) : null}
       </div>
 
-      <AddResourceSheet
-        isOpen={showAddResource}
-        onClose={() => setShowAddResource(false)}
-        onAdd={handleAddResource}
-      />
+      {isOwner ? (
+        <AddResourceSheet
+          isOpen={showAddResource}
+          onClose={() => setShowAddResource(false)}
+          onAdd={handleAddResource}
+        />
+      ) : null}
 
-      {showTagPicker && (
+      {isOwner && showTagPicker ? (
         <>
           <div
             className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[60]"
@@ -478,7 +527,7 @@ export default function TopicDetailClient({
             </div>
           </div>
         </>
-      )}
+      ) : null}
     </div>
   );
 }

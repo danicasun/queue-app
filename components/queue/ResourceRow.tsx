@@ -21,6 +21,8 @@ type ResourceRowProps = {
   resource: Resource;
   onOpen?: () => void;
   onMore?: () => void;
+  /** When false, hides the delete/more control (e.g. viewing someone else’s topic). */
+  showMore?: boolean;
 };
 
 const categoryConfig: Record<
@@ -57,7 +59,8 @@ const categoryConfig: Record<
 export default function ResourceRow({
   resource,
   onOpen,
-  onMore
+  onMore,
+  showMore = true
 }: ResourceRowProps) {
   const category =
     categoryConfig[resource.category ?? ""] || {
@@ -96,17 +99,21 @@ export default function ResourceRow({
       </div>
       <div className="flex items-center gap-1">
         <button
+          type="button"
           onClick={onOpen}
           className="w-8 h-8 rounded-full flex items-center justify-center text-gray-300 hover:bg-gray-50 transition-colors"
         >
           <ExternalLink className="w-3.5 h-3.5" />
         </button>
-        <button
-          onClick={onMore}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-gray-300 hover:bg-gray-50 transition-colors"
-        >
-          <MoreHorizontal className="w-3.5 h-3.5" />
-        </button>
+        {showMore && onMore && (
+          <button
+            type="button"
+            onClick={onMore}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-gray-300 hover:bg-gray-50 transition-colors"
+          >
+            <MoreHorizontal className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
     </div>
   );

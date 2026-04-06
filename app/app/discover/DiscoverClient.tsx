@@ -70,6 +70,7 @@ export default function DiscoverClient({ initialFeed }: DiscoverClientProps) {
             <ActivityCard
               key={item.id}
               activity={item}
+              topicHref={`/app/topic/${item.topicId}?from=discover`}
               onSave={(nextSaved) => handleSave(item.topicId, nextSaved)}
               onOpenComments={() =>
                 setCommentSheet({
